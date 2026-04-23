@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ATHA</title>
+
+<style>
+body {
+  background: linear-gradient(135deg,#020617,#0f172a);
+  color:white;
+  font-family:sans-serif;
+  text-align:center;
+  padding:40px;
+}
+
+h1 {
+  color:#38bdf8;
+  text-shadow:0 0 15px #38bdf8;
+}
+
+.container {
+  background:#020617;
+  padding:20px;
+  border-radius:15px;
+  max-width:400px;
+  margin:auto;
+  box-shadow:0 0 20px rgba(56,189,248,0.3);
+}
+
+input,button {
+  width:100%;
+  padding:12px;
+  margin:10px 0;
+  border:none;
+  border-radius:10px;
+}
+
+button {
+  background:#38bdf8;
+  cursor:pointer;
+}
+
+.loading {
+  animation:blink 1s infinite;
+}
+
+@keyframes blink {
+  50% {opacity:0.3;}
+}
+
+video {
+  width:100%;
+  border-radius:10px;
+  margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🚀 ATHA</h1>
+<p>TikTok Downloader No Watermark + MP3</p>
+
+<div class="container">
+  <input id="url" placeholder="Paste link TikTok...">
+
+  <button onclick="getVideo()">Download Video</button>
+  <button onclick="getMP3()">Download MP3</button>
+
+  <div id="result"></div>
+</div>
+
+<script>
+// 🔥 MULTI API BACKUP
+const APIs = [
+  (url) => `https://api.tiklydown.eu.org/api/download?url=${url}`,
+  (url) => `https://tikwm.com/api/?url=${url}`
+];
+
+// 🔄 FETCH DENGAN RETRY
+async function fetchWithBackup(url) {
+  for (let api of APIs) {
+    try {
+      let res = await fetch(api(encodeURIComponent(url)));
+      let data = await res.json();
+
+      // format beda tiap API
+      if (data.video) return {video:data.video, music:data.music};
+      if (data.data) return {
+        video: data.data.play,
+        music: data.data.music
+      };
+
+    } catch(e) {}
+  }
+  throw "Semua server gagal";
+}
+
+// 🎬 VIDEO
+async function getVideo() {
+  const url = document.getElementById("url").value;
+  const result = document.getElementById("result");
+
+  if (!url.includes("tiktok")) {
+    result.innerHTML = "❌ Link tidak valid!";
+    return;
+  }
+
+  result.innerHTML = "<div class='loading'>Loading...</div>";
+
+  try {
+    let data = await fetchWithBackup(url);
+
+    result.innerHTML = `
+      <video controls src="${data.video}"></video>
+      <a href="${data.video}" download>
+        <button>⬇ Download</button>
+      </a>
+    `;
+
+  } catch {
+    result.innerHTML = "🚫 Server sibuk, coba lagi!";
+  }
+}
+
+// 🎵 MP3
+async function getMP3() {
+  const url = document.getElementById("url").value;
+  const result = document.getElementById("result");
+
+  result.innerHTML = "<div class='loading'>Converting...</div>";
+
+  try {
+    let data = await fetchWithBackup(url);
+
+    result.innerHTML = `
+      <audio controls src="${data.music}"></audio>
+      <a href="${data.music}" download>
+        <button>⬇ Download MP3</button>
+      </a>
+    `;
+
+  } catch {
+    result.innerHTML = "🚫 Gagal ambil audio!";
+  }
+}
+</script>
+
+</body>
+</html>
